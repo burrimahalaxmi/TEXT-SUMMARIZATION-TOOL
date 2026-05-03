@@ -1,0 +1,51 @@
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+import heapq
+
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def summarize_text(text, num_sentences=3):
+    # 1. Preprocessing: Tokenization and cleaning
+    stop_words = set(stopwords.words('english'))
+    word_frequencies = {}
+    for word in word_tokenize(text.lower()):
+        if word not in stop_words and word.isalnum():
+            word_frequencies[word] = word_frequencies.get(word, 0) + 1
+
+    # 2. Normalize frequencies
+    max_freq = max(word_frequencies.values())
+    for word in word_frequencies.keys():
+        word_frequencies[word] = word_frequencies[word] / max_freq
+
+    # 3. Sentence Scoring: Sum frequencies of words in sentences
+    sentence_list = sent_tokenize(text)
+    sentence_scores = {}
+    for sent in sentence_list:
+        for word in word_tokenize(sent.lower()):
+            if word in word_frequencies:
+                if len(sent.split(' ')) < 30: # Limit sentence length for better flow
+                    sentence_scores[sent] = sentence_scores.get(sent, 0) + word_frequencies[word]
+
+    # 4. Generate Summary: Pick the top N sentences
+    summary_sentences = heapq.nlargest(num_sentences, sentence_scores, key=sentence_scores.get)
+    summary = ' '.join(summary_sentences)
+    return summary
+
+# --- Deliverable Showcase ---
+input_article = """
+Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence 
+concerned with the interactions between computers and human language, in particular how to program computers 
+to process and analyze large amounts of natural language data. The goal is a computer capable of understanding 
+the contents of documents, including the contextual nuances of language within them. The technology can then 
+accurately extract information and insights contained in the documents as well as categorize and organize the 
+documents themselves. Challenges in natural language processing frequently involve speech recognition, 
+natural-language understanding, and natural-language generation.
+"""
+
+print("--- ORIGINAL TEXT ---")
+print(input_article)
+print("\n--- CONCISE SUMMARY ---")
+print(summarize_text(input_article, num_sentences=2))
